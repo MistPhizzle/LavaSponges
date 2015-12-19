@@ -1,1 +1,3 @@
 radius: 7
+WorkOnWater: true
+WaterRadius: 5

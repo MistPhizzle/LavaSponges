@@ -9,6 +9,7 @@ import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -32,6 +33,13 @@ public class BlockListener implements Listener {
 					}
 				}
 			}
+			if (block.getType() == Material.WATER || block.getType() == Material.STATIONARY_WATER) {
+				for (Block b: getBlocksAroundPoint(block.getLocation(), plugin.getConfig().getInt("WaterRadius"))) {
+					if (b.getType() == Material.SPONGE) {
+						event.setCancelled(true); // Cancel if there's a sponge within the radius.
+					}
+				}
+			}
 		}
 	}
 	
@@ -42,10 +50,31 @@ public class BlockListener implements Listener {
 			if (block != null) {
 				if (block.getType() == Material.SPONGE) {
 					block.breakNaturally();
+					block.setType(Material.AIR);
+					for (Block b: getBlocksAroundPoint(block.getLocation(), 10)) {
+						if (b != null) {
+							b.getState().update();
+						}
+					}
 				}
 			}
 		}
 	}
+	
+	@EventHandler
+	public void onBreak(BlockBreakEvent event) {
+		Block block = event.getBlock();
+		if (block != null) {
+			if (block.getType() == Material.SPONGE) {
+				for (Block b: getBlocksAroundPoint(block.getLocation(), plugin.getConfig().getInt("radius") + 1)) {
+					if (b != null) {
+						b.getState().update();
+					}
+				}
+			}
+		}
+	}
+	
 	@EventHandler
 	public void onPlace(BlockPlaceEvent event) {
 		Block block = event.getBlock();
@@ -58,7 +87,17 @@ public class BlockListener implements Listener {
 						}
 					}
 				}
+				if (plugin.getConfig().getBoolean("WorkOnWater")) {
+					for (Block b: getBlocksAroundPoint(block.getLocation(), plugin.getConfig().getInt("WaterRadius"))) {
+						if (b != null) {
+							if (b.getType() == Material.WATER || b.getType() == Material.STATIONARY_WATER) {
+								b.setType(Material.AIR);
+							}
+						}
+					}
+				}
 			}
+			
 		}
 	}
 	
